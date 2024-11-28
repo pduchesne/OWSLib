@@ -100,23 +100,33 @@ class OpenSearch(object):
 
         if self.description.urls[type_]['parameters']:
             LOGGER.debug('Validating kwargs against defined parameters')
+            params = self.description.urls[type_]['parameters']
+
             for key, value in kwargs.items():
-                if key not in self.description.urls[type_]['parameters']:
-                    msg = f'parameter {key} not found'
+                qualifiedName = key.replace('_', ':')
+
+                # Try to match key against either param name or param value
+                # The Opensearch Parameters extension is ill-defined, in that it references parameters by their
+                # url query parameter name, rather than their qualified name
+                # Short of fixing that extension, this code looks for both the qualified name (here 'value') and the URL query parameter name
+                param = next((params[pname] for pname in params if params[pname]['value'] == qualifiedName or pname == qualifiedName), None)
+
+                if not param:
+                    msg = f'parameter {qualifiedName} not found'
                     LOGGER.debug(msg)
                     raise RuntimeError(msg)
-                if 'options' in self.description.urls[type_]['parameters'][key]:
+                if 'options' in param:
                     LOGGER.debug('Validating against parameter options')
-                    if value not in self.description.urls[type_]['parameters'][key]['options']:
-                        msg = f"{value} not in {self.description.urls[type_]['parameters'][key]['options']}"
+                    if value not in param['options']:
+                        msg = f"{value} not in {param['options']}"
                         LOGGER.debug(msg)
                         raise RuntimeError(msg)
 
-                LOGGER.debug(f'Setting parameter {key} in URL template')
+                LOGGER.debug(f'Setting parameter {qualifiedName} in URL template')
 
                 template = template_replace_token(
                     template,
-                    self.description.urls[type_]['parameters'][key]['value'],
+                    param['value'],
                     value)
 
         else:
