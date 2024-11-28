@@ -109,7 +109,7 @@ class OpenSearch(object):
                 # The Opensearch Parameters extension is ill-defined, in that it references parameters by their
                 # url query parameter name, rather than their qualified name
                 # Short of fixing that extension, this code looks for both the qualified name (here 'value') and the URL query parameter name
-                param = next((params[pname] for pname in params if params[pname]['value'] == qualifiedName or pname == qualifiedName), None)
+                param = next((params[pname] for pname in params if params[pname]['value'] == ('{'+qualifiedName+'}') or pname == qualifiedName), None)
 
                 if not param:
                     msg = f'parameter {qualifiedName} not found'
